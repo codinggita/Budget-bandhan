@@ -4,6 +4,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import guestRoutes from './routes/guestRoutes.js';
+import weddingRoutes from './routes/weddingRoutes.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/guests', guestRoutes);
+app.use('/api/weddings', weddingRoutes);
 
 
 // Base route

@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import GuestManagement from './pages/dashboard/GuestManagement';
+import BudgetWizard from './pages/dashboard/BudgetWizard';
+import api from './services/api';  
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -36,6 +38,26 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [weddings, setWeddings] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // IMPORTANT: Add fetchWeddings function
+  const fetchWeddings = async () => {
+    try {
+      setLoading(true);
+      // Make sure you have api imported at the top
+      const response = await api.get('/weddings');
+      setWeddings(response.data);
+    } catch (error) {
+      console.error('Failed to fetch weddings:', error);
+      toast.error('Failed to load wedding plans');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add useEffect to fetch weddings on component mount
+  useEffect(() => {
+    fetchWeddings();
+  }, []);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -69,8 +91,7 @@ const Dashboard = () => {
       try {
         await api.delete(`/weddings/${id}`);
         toast.success('Wedding plan deleted successfully');
-        // Refresh the list
-        fetchWeddings();
+        fetchWeddings(); // Refresh the list
       } catch (error) {
         toast.error('Failed to delete wedding plan');
       }
@@ -91,6 +112,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-6">
               <Link to="/dashboard" className="hover:text-saffron-200 transition">Dashboard</Link>
               <Link to="/dashboard/guests" className="hover:text-saffron-200 transition">Guest Management</Link>
+              <Link to="/dashboard/budget-wizard" className="hover:text-saffron-200 transition">Budget Wizard</Link>
               <span>Welcome, {user?.name}!</span>
               <button
                 onClick={logout}
@@ -146,7 +168,23 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <h3 className="font-heading text-xl text-saffron-600 mb-4">Quick Actions</h3>
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {/* Budget Wizard Card */}
+          <Link
+            to="/dashboard/budget-wizard"
+            className="block group"
+          >
+            <div className="bg-white border-2 border-saffron-100 rounded-xl p-6 hover:border-saffron-500 hover:shadow-lg transition-all transform hover:-translate-y-1">
+              <div className="w-16 h-16 bg-saffron-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-saffron-500 group-hover:text-white transition">
+                <span className="text-2xl">💰</span>
+              </div>
+              <h3 className="font-heading text-xl text-saffron-600 mb-2 text-center">Budget Wizard</h3>
+              <p className="text-sm text-gray-600 text-center">Create a new wedding budget plan</p>
+              <div className="mt-4 text-center">
+                <span className="text-saffron-500 group-hover:text-saffron-600 font-medium">Start Now →</span>
+              </div>
+            </div>
+          </Link>
 
           {/* Guest Manager Card */}
           <Link
@@ -165,44 +203,138 @@ const Dashboard = () => {
             </div>
           </Link>
 
-          {/* Budget Wizard Card */}
-          <Link
-            to="/dashboard/budget-wizard"
-            className="block group"
-          >
-            <div className="bg-white border-2 border-saffron-100 rounded-xl p-6 hover:border-saffron-500 hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="w-16 h-16 bg-saffron-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-saffron-500 group-hover:text-white transition">
-                <span className="text-2xl">💰</span>
-              </div>
-              <h3 className="font-heading text-xl text-saffron-600 mb-2 text-center">Budget Wizard</h3>
-              <p className="text-sm text-gray-600 text-center">Create a new wedding budget plan</p>
-              <div className="mt-4 text-center">
-                <span className="text-saffron-500 group-hover:text-saffron-600 font-medium">Start Now →</span>
-              </div>
+          {/* Decor Library Card - Coming Soon */}
+          <div className="bg-white border-2 border-gray-200 rounded-xl p-6 opacity-50 cursor-not-allowed">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🎨</span>
             </div>
-          </Link>
+            <h3 className="font-heading text-xl text-gray-600 mb-2 text-center">Decor Library</h3>
+            <p className="text-sm text-gray-500 text-center">Coming Soon</p>
+            <div className="mt-4 text-center">
+              <span className="text-gray-400">🔒 Coming Soon</span>
+            </div>
+          </div>
+        </div>
 
-          {/* Decor Library Card */}
-          <Link
-            to="/dashboard/decor"
-            className="block group"
-          >
-            <div className="bg-white border-2 border-purple-100 rounded-xl p-6 hover:border-purple-500 hover:shadow-lg transition-all transform hover:-translate-y-1">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-500 group-hover:text-white transition">
-                <span className="text-2xl">🎨</span>
-              </div>
-              <h3 className="font-heading text-xl text-purple-600 mb-2 text-center">Decor Library</h3>
-              <p className="text-sm text-gray-600 text-center">Browse Indian wedding decor with cost insights</p>
-              <div className="mt-4 text-center">
-                <span className="text-purple-500 group-hover:text-purple-600 font-medium">Explore Now →</span>
-              </div>
+        {/* Saved Wedding Plans Section */}
+        <div className="card">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-heading text-xl text-saffron-600">Your Wedding Plans</h3>
+            <Link
+              to="/dashboard/budget-wizard"
+              className="btn-primary text-sm px-4 py-2"
+            >
+              + New Plan
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-saffron-500 border-t-transparent"></div>
+              <p className="mt-2 text-gray-600">Loading your wedding plans...</p>
             </div>
-          </Link>
+          ) : weddings.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">💒</div>
+              <p className="text-gray-500 text-lg mb-2">No wedding plans yet</p>
+              <p className="text-gray-400 mb-4">Start by creating your first wedding budget</p>
+              <Link
+                to="/dashboard/budget-wizard"
+                className="btn-primary inline-block"
+              >
+                Create Your First Plan
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {weddings.map((wedding) => (
+                <div
+                  key={wedding._id}
+                  className="border border-gray-200 rounded-lg p-4 hover:border-saffron-300 hover:shadow-md transition"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    {/* Wedding Info */}
+                    <div className="flex-1 min-w-[200px]">
+                      <h4 className="font-heading text-lg text-saffron-600 mb-1">
+                        {wedding.coupleNames}
+                      </h4>
+                      <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                        <span>📅 {formatDate(wedding.weddingDate)}</span>
+                        <span>📍 {wedding.city}</span>
+                        <span>👥 {wedding.guestCount} guests</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {wedding.functions?.map((f, idx) => (
+                          <span
+                            key={idx}
+                            className="text-xs bg-saffron-100 text-saffron-700 px-2 py-1 rounded"
+                          >
+                            {f.type}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Budget Info */}
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">Estimated Budget</p>
+                      <div className="text-lg font-bold text-saffron-600">
+                        {formatCurrency(wedding.budgetRanges?.medium || 0)}
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        Range: {formatCurrency(wedding.budgetRanges?.low || 0)} - {formatCurrency(wedding.budgetRanges?.high || 0)}
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleViewWedding(wedding._id)}
+                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                        title="View Details"
+                      >
+                        👁️
+                      </button>
+                      <button
+                        onClick={() => handleEditWedding(wedding._id)}
+                        className="p-2 text-saffron-600 hover:bg-saffron-50 rounded-lg transition"
+                        title="Edit Plan"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteWedding(wedding._id)}
+                        className="p-2 text-indian-red-600 hover:bg-indian-red-50 rounded-lg transition"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs text-gray-500 mb-1">
+                      <span>Planning Progress</span>
+                      <span>{wedding.status === 'completed' ? '100%' : '30%'}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className="bg-saffron-500 h-1.5 rounded-full"
+                        style={{ width: wedding.status === 'completed' ? '100%' : '30%' }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>
   );
 };
+
 
 // Home Page Component
 const Home = () => {
@@ -297,6 +429,11 @@ function AppContent() {
       <Route path="/dashboard/guests" element={
         <ProtectedRoute>
           <GuestManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/budget-wizard" element={
+        <ProtectedRoute>
+          <BudgetWizard />
         </ProtectedRoute>
       } />
     </Routes>
